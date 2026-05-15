@@ -1,0 +1,13 @@
+.next/
+.agents/
+.codex/
+.playwright-mcp/
+.worktrees/
+venv/
+node_modules/
+dist/
+coverage/
+.superpowers/
+.env*.local
+!.env.example
+drizzle/meta/_journal.json
