@@ -12,6 +12,13 @@ const completeEnv = {
   CREEM_MODERATION_URL: "https://creem.example.com/v1/moderation/prompt",
   CREEM_MODERATION_API_KEY: "creem-key",
   CREEM_MODERATION_PROVIDER: "openai",
+  CREEM_PRODUCT_KEY: "prod_test",
+  CREEM_API_KEY: "creem-api-key",
+  CREEM_CHECKOUT_URL: "https://test-api.creem.io/v1/checkouts",
+  CREEM_WEBHOOK_SECRET: "whsec_test",
+  CREEM_API_BASE_URL: "https://test-api.creem.io/v1",
+  CREEM_CHECKOUT_SUCCESS_URL: "http://localhost:3000/payment/success",
+  CREEM_CHECKOUT_CANCEL_URL: "http://localhost:3000/payment/cancel",
   ARK_VOICE_GENERATOR_URL: "wss://voice.example.com",
   ARK_VOICE_API_KEY: "voice-key",
   ARK_VOICE_APP_ID: "voice-app",
@@ -50,6 +57,18 @@ describe("environment parsing", () => {
     const result = parseServerEnv.safeParse({
       ...completeEnv,
       DATABASE_URL: ""
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty creem payment secrets", () => {
+    const result = parseServerEnv.safeParse({
+      ...completeEnv,
+      CREEM_PRODUCT_KEY: "",
+      CREEM_API_KEY: "",
+      CREEM_CHECKOUT_URL: "",
+      CREEM_WEBHOOK_SECRET: ""
     });
 
     expect(result.success).toBe(false);

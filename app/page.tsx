@@ -1,6 +1,7 @@
 import { ArrowRight, BadgeDollarSign, Check, LogIn, Sparkles, UserPlus } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
+import { PurchaseButton } from "@/components/payments/purchase-button";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { HomeLogo } from "@/components/brand/home-logo";
 import { CharacterGrid } from "@/components/characters/character-grid";
@@ -167,13 +168,16 @@ export default async function Home() {
               </p>
             </div>
 
-            <Link
-              className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-[#fff7ec] px-5 py-3 text-sm font-medium text-[#1d1917] transition-colors hover:bg-[#f2dcc5]"
-              href="#preset-characters"
-            >
-              先看看角色
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <PurchaseButton />
+              <Link
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#4b4038] px-5 py-3 text-sm font-medium text-[#fff7ec] transition-colors hover:bg-white/5"
+                href="#preset-characters"
+              >
+                先看看角色
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
