@@ -8,6 +8,7 @@ import { CharacterGrid } from "@/components/characters/character-grid";
 import { CustomCharacterModal } from "@/components/characters/custom-character-modal";
 import { Button } from "@/components/ui/button";
 import { getUserDisplayIdentity } from "@/lib/auth-display";
+import { getMembershipAccessState } from "@/lib/membership-status";
 import { listCharactersForHome } from "@/server/characters/service";
 import { getSessionUser } from "@/server/auth/session";
 
@@ -17,11 +18,14 @@ type HomeUser = {
   username?: string | null;
   email?: string | null;
   name?: string | null;
+  membershipType?: "non_member" | "permanent_member" | "subscription_member";
+  membershipExpiresAt?: string | null;
 };
 
 export default async function Home() {
   const user = (await getSessionUser(await headers())) as HomeUser | null;
   const identity = user ? getUserDisplayIdentity(user) : null;
+  const membershipAccessState = getMembershipAccessState(user);
   const { preset, custom } = await listCharactersForHome(undefined, user?.id ?? null);
 
   return (
@@ -43,6 +47,13 @@ export default async function Home() {
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-[#201b18]">{identity.primary}</p>
               {identity.secondary ? <p className="text-xs text-[#7d7067]">{identity.secondary}</p> : null}
+              <p className="text-xs text-[#9b3933]">
+                {membershipAccessState === "member_active"
+                  ? "已解锁完整功能"
+                  : membershipAccessState === "member_expired"
+                    ? "已过期"
+                    : "可体验预设角色，开通后解锁自定义角色"}
+              </p>
             </div>
             <SignOutButton />
           </div>
@@ -80,29 +91,38 @@ export default async function Home() {
                 陪伴角色
               </h1>
               <p className="mt-6 max-w-sm text-base leading-8 text-[#6f625b]">
-                从四个预设人格开始。对话、声音、图片与记忆围绕同一个人设沉淀，像一段关系被慢慢点亮。
+                {identity
+                  ? membershipAccessState === "member_active"
+                    ? "从四个预设人格开始，之后你还可以创建并使用自定义角色。对话、声音、图片与记忆围绕同一个人设沉淀，像一段关系被慢慢点亮。"
+                    : membershipAccessState === "member_expired"
+                      ? "你的会员已过期。你仍可以看到预设内容，但自定义角色已被锁定。"
+                      : "你已经登录，可以先体验四个预设人格。开通后会解锁自定义角色创建与使用。"
+                  : "先登录后开始体验四个预设人格。对话、声音、图片与记忆围绕同一个人设沉淀，像一段关系被慢慢点亮。"}
               </p>
             </div>
 
-            {/* <div className="mt-8">
-              <div className="flex flex-wrap gap-3">
-                {identity ? (
+            <div className="mt-8 flex flex-wrap gap-3">
+              {identity ? (
+                membershipAccessState === "member_active" ? (
                   <CustomCharacterModal />
                 ) : (
                   <Button asChild className="bg-[#1d1917] text-[#fff7ec] hover:bg-[#9b3933]">
-                    <Link href="/sign-in">登录后开始</Link>
+                    <Link href="#pricing">{membershipAccessState === "member_expired" ? "已过期，重新开通" : "开通后解锁自定义角色"}</Link>
                   </Button>
-                )}
-                <Button
-                  asChild
-                  className="border-[#d8cec2] bg-transparent text-[#201b18] hover:bg-[#eee5da] hover:text-[#201b18]"
-                  variant="outline"
-                >
-                  <Link href="#characters">浏览角色</Link>
+                )
+              ) : (
+                <Button asChild className="bg-[#1d1917] text-[#fff7ec] hover:bg-[#9b3933]">
+                  <Link href="/sign-in">登录后开始</Link>
                 </Button>
-              </div>
-
-            </div> */}
+              )}
+              <Button
+                asChild
+                className="border-[#d8cec2] bg-transparent text-[#201b18] hover:bg-[#eee5da] hover:text-[#201b18]"
+                variant="outline"
+              >
+                <Link href="#characters">浏览角色</Link>
+              </Button>
+            </div>
           </div>
 
           <div className="grid min-w-0 content-start gap-4">
@@ -115,7 +135,7 @@ export default async function Home() {
                 四个角色完整首屏展示，先看见她，再选择是否进入对话。
               </p>
             </div>
-            <CharacterGrid characters={preset} isSignedIn={!!identity} />
+            <CharacterGrid characters={preset} isSignedIn={!!identity} paymentStatus={membershipAccessState === "member_active" ? "paid" : "unpaid"} />
           </div>
         </div>
       </section>
@@ -126,18 +146,52 @@ export default async function Home() {
             <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-[#9b3933]">Pricing</p>
             <div className="max-w-xl space-y-4">
               <h2 className="text-3xl font-semibold tracking-tight text-[#201b18] sm:text-4xl">
-                单一方案，简单透明
+                {identity
+                  ? membershipAccessState === "member_active"
+                    ? "你已解锁完整功能"
+                    : membershipAccessState === "member_expired"
+                      ? "已过期"
+                      : "先体验预设角色，再解锁自定义角色"
+                  : "先登录，再开始体验"}
               </h2>
               <p className="text-base leading-8 text-[#6f625b]">
-                先用最轻的方式开始体验。这里目前只展示一个价格层级，支付和接口接入会放在后续阶段处理。
+                {identity
+                  ? membershipAccessState === "member_active"
+                    ? "当前账号已解锁完整站点功能，自定义角色和全部主流程均可使用。"
+                    : membershipAccessState === "member_expired"
+                      ? "当前账号已过期。若想继续使用自定义角色，请重新开通。"
+                      : "当前账号可以体验预设角色。若想使用和创建自定义角色，请继续开通。"
+                  : "登录后可以先体验预设角色，再决定是否开通自定义角色能力。"}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
-                "完整访问当前站点功能",
-                "首屏角色与自定义角色体验",
-                "后续功能迭代优先接入",
-                "先不绑定任何支付流程"
+                identity
+                  ? membershipAccessState === "member_active"
+                    ? "完整访问当前站点功能"
+                    : "可先体验预设角色对话"
+                  : "登录后可开始体验",
+                identity
+                  ? membershipAccessState === "member_active"
+                    ? "首屏角色与自定义角色体验"
+                    : membershipAccessState === "member_expired"
+                      ? "已过期，自定义角色锁定"
+                      : "自定义角色功能需开通"
+                  : "登录后解锁预设角色入口",
+                identity
+                  ? membershipAccessState === "member_active"
+                    ? "后续功能迭代优先接入"
+                    : membershipAccessState === "member_expired"
+                      ? "已过期，需重新开通"
+                      : "开通后解锁完整功能"
+                  : "注册或登录后继续",
+                identity
+                  ? membershipAccessState === "member_active"
+                    ? "已解锁全部权益"
+                    : membershipAccessState === "member_expired"
+                      ? "已过期"
+                      : "未开通时仅限预设角色"
+                  : "当前仅展示公开内容"
               ].map((item) => (
                 <div
                   key={item}
@@ -160,16 +214,46 @@ export default async function Home() {
                 <p className="text-sm uppercase tracking-[0.2em] text-[#cfb8ad]">Starter access</p>
                 <div className="mt-4 flex items-end gap-2">
                   <span className="text-6xl font-semibold tracking-tight">$1</span>
-                  <span className="pb-2 text-sm text-[#cfb8ad]">/ 目前仅展示价格</span>
+                  <span className="pb-2 text-sm text-[#cfb8ad]">
+                    {identity
+                      ? membershipAccessState === "member_active"
+                        ? "/ 已解锁完整功能"
+                        : membershipAccessState === "member_expired"
+                          ? "/ 已过期"
+                          : "/ 可先体验预设角色"
+                      : "/ 登录后可继续"}
+                  </span>
                 </div>
               </div>
               <p className="max-w-sm text-sm leading-7 text-[#d7c5bb]">
-                这是一个展示型定价区块，方便你在落地页里直接表达价格锚点。后续若接入支付，我再帮你补完整购买流程。
+                {identity
+                  ? membershipAccessState === "member_active"
+                    ? "你的账号已解锁完整功能。如果你希望创建自定义角色，现在就可以继续。"
+                    : membershipAccessState === "member_expired"
+                      ? "你的会员已过期。你仍可体验预设角色，但自定义角色会保持锁定。"
+                      : "你已经可以体验预设角色。想要创建和使用自定义角色，请继续开通。"
+                  : "先登录后体验预设角色，再决定是否开通自定义角色。"}
               </p>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <PurchaseButton />
+              {identity ? (
+                membershipAccessState === "member_active" ? (
+                  <Button asChild className="bg-[#fff7ec] text-[#1d1917] hover:bg-[#f2dcc5]">
+                    <Link href="#preset-characters">继续使用</Link>
+                  </Button>
+                ) : membershipAccessState === "member_expired" ? (
+                  <Button asChild className="bg-[#fff7ec] text-[#1d1917] hover:bg-[#f2dcc5]">
+                    <Link href="#pricing">已过期，重新开通</Link>
+                  </Button>
+                ) : (
+                  <PurchaseButton />
+                )
+              ) : (
+                <Button asChild className="bg-[#fff7ec] text-[#1d1917] hover:bg-[#f2dcc5]">
+                  <Link href="/sign-in">登录后继续</Link>
+                </Button>
+              )}
               <Link
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-[#4b4038] px-5 py-3 text-sm font-medium text-[#fff7ec] transition-colors hover:bg-white/5"
                 href="#preset-characters"
@@ -192,12 +276,13 @@ export default async function Home() {
               </div>
               <CustomCharacterModal />
             </div>
-            <CharacterGrid
-              characters={custom}
-              emptyText="你还没有自定义角色。创建后会显示在这里。"
-              isSignedIn={!!identity}
-              variant="compact"
-            />
+              <CharacterGrid
+                characters={custom}
+                emptyText="你还没有自定义角色。创建后会显示在这里。"
+                isSignedIn={!!identity}
+                paymentStatus={membershipAccessState === "member_active" ? "paid" : "unpaid"}
+                variant="compact"
+              />
           </section>
         ) : null}
 

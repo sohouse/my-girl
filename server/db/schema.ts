@@ -25,7 +25,9 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   username: text("username").unique(),
   displayUsername: text("display_username"),
-  role: text("role").notNull().default("user")
+  role: text("role").notNull().default("user"),
+  membershipType: text("membership_type").notNull().default("non_member"),
+  membershipExpiresAt: timestamp("membership_expires_at", { withTimezone: true })
 });
 
 export const session = pgTable("session", {

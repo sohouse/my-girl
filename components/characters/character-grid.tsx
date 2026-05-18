@@ -25,11 +25,13 @@ export function getCharacterGridClassName(variant: "gallery" | "compact" = "gall
 export function CharacterGrid({
   characters,
   isSignedIn,
+  paymentStatus = "unpaid",
   emptyText = "暂无角色",
   variant = "gallery"
 }: {
   characters: Character[];
   isSignedIn: boolean;
+  paymentStatus?: "unpaid" | "paid";
   emptyText?: string;
   variant?: "gallery" | "compact";
 }) {
@@ -106,15 +108,27 @@ export function CharacterGrid({
             </p>
             <div className="mt-auto pt-5">
               {isSignedIn ? (
-                <Button
-                  className="w-full bg-[#1d1917] text-[#fff7ec] hover:bg-[#9b3933]"
-                  disabled={pendingId === character.id}
-                  onClick={() => startChat(character.id)}
-                  type="button"
-                >
-                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                  {pendingId === character.id ? "正在进入" : "开始对话"}
-                </Button>
+                character.kind === "preset" || paymentStatus === "paid" ? (
+                  <Button
+                    className="w-full bg-[#1d1917] text-[#fff7ec] hover:bg-[#9b3933]"
+                    disabled={pendingId === character.id}
+                    onClick={() => startChat(character.id)}
+                    type="button"
+                  >
+                    <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                    {pendingId === character.id ? "正在进入" : "开始对话"}
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full border-[#d8cec2] bg-transparent text-[#7d7067]"
+                    disabled
+                    type="button"
+                    variant="outline"
+                  >
+                    <LockKeyhole className="h-4 w-4" aria-hidden="true" />
+                    开通后可用
+                  </Button>
+                )
               ) : (
                 <Button
                   asChild

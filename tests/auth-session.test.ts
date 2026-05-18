@@ -36,7 +36,9 @@ describe("session user", () => {
             id: "user-1",
             email: "admin@example.com",
             name: "Admin",
-            role: "admin"
+            role: "admin",
+            membershipType: "non_member",
+            membershipExpiresAt: null
           })
         }
       }
@@ -46,7 +48,9 @@ describe("session user", () => {
 
     expect(user).toMatchObject({
       id: "user-1",
-      role: "admin"
+      role: "admin",
+      membershipType: "non_member",
+      membershipExpiresAt: null
     });
   });
 });

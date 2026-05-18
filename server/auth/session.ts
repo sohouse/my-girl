@@ -16,6 +16,8 @@ export async function getSessionUser(headers: Headers) {
 
   return {
     ...session.user,
-    role: dbUser?.role ?? "user"
+    role: dbUser?.role ?? "user",
+    membershipType: dbUser?.membershipType ?? "non_member",
+    membershipExpiresAt: dbUser?.membershipExpiresAt ?? null
   };
 }
