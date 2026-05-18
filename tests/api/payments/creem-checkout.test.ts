@@ -1,6 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApi } from "@/server/api/app";
 
+vi.mock("@/env", () => ({
+  getServerEnv: () => ({
+    CREEM_PRODUCT_KEY: "prod_test",
+    CREEM_API_KEY: "creem-api-key",
+    CREEM_CHECKOUT_URL: "https://test-api.creem.io/v1/checkouts",
+    CREEM_WEBHOOK_SECRET: "whsec_test",
+    CREEM_API_BASE_URL: "https://test-api.creem.io/v1",
+    CREEM_CHECKOUT_SUCCESS_URL: "http://localhost:3000/payment/success"
+  })
+}));
+
 describe("Creem checkout API", () => {
   it("returns a checkout url for a valid request", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
@@ -11,7 +22,8 @@ describe("Creem checkout API", () => {
       appBaseUrl: "http://localhost:3000",
       db: {
         query: {}
-      } as never
+      } as never,
+      getUser: async () => ({ id: "user-1" })
     });
 
     const originalFetch = globalThis.fetch;

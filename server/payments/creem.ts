@@ -4,6 +4,7 @@ export type CreemCheckoutPayload = {
   customer_email?: string;
   metadata?: {
     orderId?: string;
+    userId?: string;
   };
 };
 
@@ -16,11 +17,12 @@ export function createCreemCheckoutPayload(input: {
   successUrl: string;
   customerEmail?: string;
   orderId?: string;
+  userId?: string;
 }): CreemCheckoutPayload {
   return {
     product_id: input.productKey,
     success_url: input.successUrl,
     customer_email: input.customerEmail,
-    metadata: input.orderId ? { orderId: input.orderId } : undefined
+    metadata: input.orderId || input.userId ? { orderId: input.orderId, userId: input.userId } : undefined
   };
 }

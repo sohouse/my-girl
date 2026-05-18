@@ -31,6 +31,7 @@ import { getDb } from "@/server/db/client";
 import { dispatchDueEmails } from "@/server/email/service";
 import { getSessionUser } from "@/server/auth/session";
 import { listAdminUsers, updateAdminUser } from "@/server/users/admin";
+import { createCreemCheckoutPayload, resolveCreemCheckoutUrl } from "@/server/payments/creem";
 import {
   checkRateLimit,
   createMemoryRateLimitStore,
@@ -261,6 +262,55 @@ export function createApi(dependencies: ApiDependencies = {}) {
     const result = await dispatchEmails();
 
     return c.json(result);
+  });
+
+  app.post("/payments/creem/checkout", async (c) => {
+    const user = await getUser(c.req.raw.headers);
+
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    const env = getServerEnv();
+    const productKey = env.CREEM_PRODUCT_KEY;
+    const apiKey = env.CREEM_API_KEY;
+    const apiBaseUrl = env.CREEM_API_BASE_URL ?? "https://test-api.creem.io/v1";
+    const successUrl = env.CREEM_CHECKOUT_SUCCESS_URL ?? `${getAppBaseUrl()}/payment/success`;
+
+    if (!productKey || !apiKey) {
+      return c.json({ error: "Missing Creem payment configuration" }, 500);
+    }
+
+    const body = await c.req.json() as {
+      customerEmail?: string;
+      orderId?: string;
+    };
+
+    const response = await fetch(resolveCreemCheckoutUrl(apiBaseUrl), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey
+      },
+      body: JSON.stringify(
+        createCreemCheckoutPayload({
+          productKey,
+          successUrl,
+          customerEmail: body.customerEmail,
+          orderId: body.orderId,
+          userId: user.id
+        })
+      )
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return c.json({ error: "Failed to create checkout", detail: errorText }, 502);
+    }
+
+    const data = (await response.json()) as { checkout_url?: string };
+
+    return c.json({ checkoutUrl: data.checkout_url ?? null });
   });
 
   app.get("/characters", async (c) => {

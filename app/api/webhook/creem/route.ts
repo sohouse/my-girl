@@ -29,18 +29,23 @@ export async function POST(request: NextRequest) {
       customerId?: string;
       product_id?: string;
       productId?: string;
+      metadata?: {
+        userId?: string;
+      };
     };
 
     const customerId = checkout.customer_id ?? checkout.customerId;
+    const userId = checkout.metadata?.userId ?? customerId;
     const productId = checkout.product_id ?? checkout.productId;
 
-    if (customerId) {
-      const existingUser = await findUserById(db, customerId);
+    if (userId) {
+      const existingUser = await findUserById(db, userId);
 
       if (existingUser) {
         const membershipType: MembershipType = productId?.includes("sub") ? "subscription_member" : "permanent_member";
-        const membershipExpiresAt =
-          membershipType === "subscription_member" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
+        const membershipExpiresAt = membershipType === "subscription_member"
+          ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          : null;
 
         await setUserMembership(db, {
           userId: existingUser.id,
