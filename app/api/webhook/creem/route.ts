@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
   const event = parseCreemWebhookEvent(JSON.parse(rawBody));
 
-  if (event.type === "checkout.completed") {
+  if (event.eventType === "checkout.completed") {
     // Payment completed successfully.
   }
 

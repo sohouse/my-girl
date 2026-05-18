@@ -4,11 +4,20 @@ import { parseCreemWebhookEvent } from "@/server/payments/creem-webhook";
 describe("Creem webhook parser", () => {
   it("accepts a checkout completed event payload", () => {
     const event = parseCreemWebhookEvent({
-      type: "checkout.completed",
-      data: { id: "chk_123" }
+      id: "evt_123",
+      eventType: "checkout.completed",
+      created_at: 1728734325927,
+      object: {
+        id: "ch_123",
+        object: "checkout"
+      }
     });
 
-    expect(event.type).toBe("checkout.completed");
-    expect(event.data).toEqual({ id: "chk_123" });
+    expect(event.id).toBe("evt_123");
+    expect(event.eventType).toBe("checkout.completed");
+    expect(event.object).toMatchObject({
+      id: "ch_123",
+      object: "checkout"
+    });
   });
 });

@@ -1,8 +1,10 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export type CreemWebhookEvent = {
-  type: string;
-  data?: Record<string, unknown>;
+  id: string;
+  eventType: string;
+  created_at?: number;
+  object: Record<string, unknown>;
 };
 
 export function parseCreemWebhookEvent(input: unknown): CreemWebhookEvent {
@@ -12,7 +14,15 @@ export function parseCreemWebhookEvent(input: unknown): CreemWebhookEvent {
 
   const event = input as CreemWebhookEvent;
 
-  if (typeof event.type !== "string" || event.type.trim().length === 0) {
+  if (typeof event.id !== "string" || event.id.trim().length === 0) {
+    throw new Error("Invalid Creem webhook event");
+  }
+
+  if (typeof event.eventType !== "string" || event.eventType.trim().length === 0) {
+    throw new Error("Invalid Creem webhook event");
+  }
+
+  if (!event.object || typeof event.object !== "object") {
     throw new Error("Invalid Creem webhook event");
   }
 
